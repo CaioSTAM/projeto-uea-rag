@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtualenv local
+venv/
+.env
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Dados grandes 
+data/
+models/
+downloads/
+
+
