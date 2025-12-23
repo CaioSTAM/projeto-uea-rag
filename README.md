@@ -28,50 +28,24 @@ PDFs -> Extração -> Chunking -> Embeddings
 # **Componentes**
 
 **ingest.py** - Carrega PDFs, divide em chunks, gera embeddings e salva o índice FAISS 
-**FAISS** - Armazena vetores de embeddings (similaridade semântica) 
-**HuggingFace Embeddings** - Modelo de embeddings (MiniLM-L6-v2) 
-**LLM Local (Qwen 0.5B)** - Gera a resposta usando o contexto recuperado 
-**rag.py** - Pipeline de recuperação e geração 
-**FastAPI** - Camada HTTP expondo o endpoint `/ask` 
+
+**FAISS** - Armazena vetores de embeddings (similaridade semântica)
+
+**HuggingFace Embeddings** - Modelo de embeddings (MiniLM-L6-v2)
+
+**LLM Local (Qwen 0.5B)** - Gera a resposta usando o contexto recuperado
+
+**rag.py** - Pipeline de recuperação e geração
+
+**FastAPI** - Camada HTTP expondo os endpoints `/ask`, `/retrieve`, `/health` e `/stats`
+ 
 **Docker** - Empacota todo o sistema em um container executável 
 
 ---------------------------------------------------------------------------------------------------------------
 
-# Como executar o projeto (Sem Docker)
+# Como executar o projeto com Docker
 
-## 1. Iniciar o Ambiente Virtual
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-## 2. Instalar dependências
-
-```bash
-pip install -r requirements.txt
-```
-
-## 3. Executar o pipeline de ingestão(Executar antes da API) 
-```bash
-python src/ingest.py
-```
-
-## 4. Iniciar a API
-
-```bash
-uvicorn api.main:app --reload
-```
-- fica disponível em: http://localhost:8000
-
----------------------------------------------------------------------------------------------------------------
-
-# Como executar o projeto (Com Docker)
-
-## 1. Executar o pipeline de ingestão
-```bash
-python src/ingest.py
-```
-- O ingest é executado fora do build afim de tornar a imagem leve.
-## 2. Build da Imagem
+## 1. Build da Imagem
 
 ```bash
 docker build -t assistente-uea .
@@ -80,7 +54,15 @@ docker build -t assistente-uea .
 ## 3. Rodar o conteiner 
 
 ```bash
-docker run -p 8000:8000 assistente-uea
+docker run -p 8000:8000 ^
+  -v "%cd%/data/pdfs:/app/data/pdfs" ^
+  assistente-uea
+```
+
+## 4. Acessar a documentação da API no navegador (localmente)
+
+```bash
+http://localhost:8000/docs
 ```
 
 ---------------------------------------------------------------------------------------------------------------
@@ -88,18 +70,44 @@ docker run -p 8000:8000 assistente-uea
 # Regenerar o indice
 
 ```bash
-rm -r data/vectorstore
-python src/ingest.py
+rmdir /s /q data\vectorstore
+docker run -p 8000:8000 ^
+  -v "%cd%/data/pdfs:/app/data/pdfs" ^
+  assistente-uea
 ```
 ---------------------------------------------------------------------------------------------------------------
 
 # Chamando a API no terminal
 
+## /ASK
+
 ```bash
 curl -X POST "http://localhost:8000/ask" \
      -H "Content-Type: application/json" \
-     -d '{"question": "O que é a UEA?"}'
+     -d '{"question": "Quais são os requisitos que o aluno deve atender para concorrer a uma vaga nas Casas do Estudantes da UEA?"}'
 ```
+
+## /RETRIEVE
+
+```bash
+curl -X POST "http://localhost:8000/retrieve" \
+     -H "Content-Type: application/json" \
+     -d '{"question": "requisitos para vaga na Casa do Estudante"}'
+```
+
+## /HEALTH
+
+```bash
+curl http://localhost:8000/health
+```
+
+## /STATS
+
+```bash
+curl http://localhost:8000/stats
+```
+
+
 
 
 
